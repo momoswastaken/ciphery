@@ -9,8 +9,9 @@ import numpy as np
 import zlib
 from itertools import groupby
 from sklearn.feature_extraction.text import CountVectorizer
+import time
 
-# Feature extraction functions
+# Feature extraction functions (same as before)
 def calculate_frequency_within_blocks(ciphertext, block_size=8):
     vectorizer = CountVectorizer(analyzer='char', ngram_range=(block_size, block_size))
     vectorizer.fit([ciphertext])
@@ -87,7 +88,6 @@ def classify_new_ciphertext(ciphertext, selector, scaler, svm_model, nn_model, l
     return predicted_algo_svm[0], predicted_algo_nn[0], probabilities_svm
 
 # Load dataset and train models
-
 def train_models():
     data = pd.read_csv('crypto dataset almost final - Copy.csv')
     X = data.drop(columns=['algorithm'])
@@ -120,24 +120,63 @@ with st.sidebar:
     st.header("Ciphery")
     st.write("A simple Streamlit app that analyses the algorithm used in a given ciphered database.")
     st.info("The application is currently under development and will be released soon")
-    
+
 st.title("📄 Ciphery")
-st.write(
-    "A simple Streamlit app that analyses the algorithm used in a given ciphered database."
-)   
+st.write("A simple Streamlit app that analyses the algorithm used in a given ciphered database.")
 
-ciphertext = st.text_area("Enter the ciphertext to analyze:", "")
+tab1, tab2 = st.tabs(["📂 Upload a file", "⚡ Enter text manually"])
 
-if st.button("Predict Algorithm"):
-    if ciphertext:
-        svm_prediction, nn_prediction, svm_probabilities = classify_new_ciphertext(
-            ciphertext, selector, scaler, svm_model, nn_model, label_encoder
-        )
-        st.header("Analysis Results:")
-        st.write(f"Predicted Algorithm (SVM): {svm_prediction}")
-        st.write(f"Predicted Algorithm (Neural Network): {nn_prediction}")
-        st.header("Probabilities for each algorithm (SVM):")
-        for algo, prob in zip(label_encoder.classes_, svm_probabilities):
-            st.write(f"{algo}: {prob:.4f}")
+with tab1:
+    uploaded_file = st.file_uploader("Upload your document", type=["pdf", "docx", "txt", "md"])
+
+    if not uploaded_file:
+        st.info("Please upload your document to continue", icon="📂")
     else:
-        st.warning("Please enter a ciphertext.")
+        success_message = st.success("File uploaded successfully!", icon="✅")
+        analyze_button = st.button("Analyze 🕵🏼")
+        analyze_message = st.empty()
+
+        if analyze_button:
+            analyze_message.write("Analyzing...🔍")
+            time.sleep(2)
+            analyze_message.empty()
+
+            analyzed_algo = st.subheader("Encryption Algorithm : AES encryption algorithm")
+            st.image("./images/aes.jpg")
+
+with tab2:
+    cipher_text = st.text_area(
+        "Ciphered Text",
+        placeholder="Enter your ciphered text here :",
+        height=150
+    )
+
+    info_placeholder = st.empty()
+
+    if not cipher_text.strip():
+        info_placeholder.info("Please add your cipher text to continue.", icon="🗝️")
+    else:
+        info_placeholder.empty()
+        analyze_button = st.button("Analyze 🕵🏼")
+        analyze_message = st.empty()
+
+        if analyze_button:
+            analyze_message.write("Analyzing...🔍")
+            time.sleep(2)
+            analyze_message.empty()
+
+            svm_prediction, nn_prediction, svm_probabilities = classify_new_ciphertext(
+                cipher_text, selector, scaler, svm_model, nn_model, label_encoder
+            )
+            st.header("Analysis Results:")
+            st.write(f"Predicted Algorithm (SVM): {svm_prediction}")
+            st.write(f"Predicted Algorithm (Neural Network): {nn_prediction}")
+            
+            # Display the probabilities in a tabular form
+          # Sort the probabilities DataFrame in descending order by the probabilities
+            probabilities_df = pd.DataFrame({
+                'Algorithm': label_encoder.classes_,
+                'Probability (SVM)': svm_probabilities
+            }).sort_values(by='Probability (SVM)', ascending=False)
+
+            st.dataframe(probabilities_df)
