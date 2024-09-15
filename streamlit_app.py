@@ -173,10 +173,10 @@ with tab2:
             st.write(f"Predicted Algorithm (Neural Network): {nn_prediction}")
             
             # Display the probabilities in a tabular form
-          # Sort the probabilities DataFrame in descending order by the probabilities
+        # Sort the probabilities DataFrame in descending order by the probabilities
             probabilities_df = pd.DataFrame({
                 'Algorithm': label_encoder.classes_,
                 'Probability (SVM)': svm_probabilities
-            }).sort_values(by='Probability (SVM)', ascending=False)
+            })
 
             st.dataframe(probabilities_df)
