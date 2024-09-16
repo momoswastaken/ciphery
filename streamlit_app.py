@@ -10,6 +10,7 @@ import zlib
 from itertools import groupby
 from sklearn.feature_extraction.text import CountVectorizer
 import time
+import plotly.express as px
 
 # Feature extraction functions (same as before)
 def calculate_frequency_within_blocks(ciphertext, block_size=8):
@@ -119,7 +120,6 @@ selector, scaler, svm_model, nn_model, label_encoder = train_models()
 with st.sidebar:
     st.header("Ciphery")
     st.write("A simple Streamlit app that analyses the algorithm used in a given ciphered database.")
-    st.info("The application is currently under development and will be released soon")
 
 st.title("📄 Ciphery")
 st.write("A simple Streamlit app that analyses the algorithm used in a given ciphered database.")
@@ -145,16 +145,26 @@ with tab1:
             st.image("./images/aes.jpg")
 
 with tab2:
-    cipher_text = st.text_area(
-        "Ciphered Text",
-        placeholder="Enter your ciphered text here :",
+    hexadecimal_text = st.text_area(
+        "Hexadecimal Text",
+        placeholder="Enter your hexadecimal text here :",
         height=150
-    )
+    )   
+    
+    hexadecimal_text = hexadecimal_text.strip()  # Strip any extra spaces
+
+    if hexadecimal_text:  # Check if the input is not empty
+        try:
+            # Convert the hexadecimal input to binary string
+            binary_string = bin(int(hexadecimal_text, 16))[2:].zfill(len(hexadecimal_text) * 4)
+        except ValueError:
+            st.error("Invalid hexadecimal input. Please enter a valid hexadecimal string.")
+
 
     info_placeholder = st.empty()
 
-    if not cipher_text.strip():
-        info_placeholder.info("Please add your cipher text to continue.", icon="🗝️")
+    if not hexadecimal_text.strip():
+        info_placeholder.info("Please add your hexadecimal text to continue.", icon="🗝️")
     else:
         info_placeholder.empty()
         analyze_button = st.button("Analyze 🕵🏼")
@@ -166,11 +176,10 @@ with tab2:
             analyze_message.empty()
 
             svm_prediction, nn_prediction, svm_probabilities = classify_new_ciphertext(
-                cipher_text, selector, scaler, svm_model, nn_model, label_encoder
+                binary_string, selector, scaler, svm_model, nn_model, label_encoder
             )
             st.header("Analysis Results:")
-            st.write(f"Predicted Algorithm (SVM): {svm_prediction}")
-            st.write(f"Predicted Algorithm (Neural Network): {nn_prediction}")
+            st.write(f"Predicted Algorithm : {svm_prediction}")
             
             # Display the probabilities in a tabular form
         # Sort the probabilities DataFrame in descending order by the probabilities
@@ -178,5 +187,15 @@ with tab2:
                 'Algorithm': label_encoder.classes_,
                 'Probability (SVM)': svm_probabilities
             })
-
+            
+            probabilities_df = probabilities_df.sort_values(by='Probability (SVM)', ascending=False)
+            
+            fig = px.bar(probabilities_df, 
+             x='Algorithm', 
+             y='Probability (SVM)', 
+             title='Algorithm Probabilities',
+             labels={'Algorithm': 'Cryptographic Algorithm', 'Probability (SVM)': 'Prediction Probability'},
+             )
+            
             st.dataframe(probabilities_df)
+            st.plotly_chart(fig)
