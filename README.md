@@ -36,7 +36,7 @@
 - **SVM**: Support Vector Machines for classification.
 - **OpenCV**: For any potential image-related processing.
 
-### How to run it on your own machine
+## How to run it on your own machine
 
 1. Install the requirements
 
